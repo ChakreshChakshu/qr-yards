@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import ContentTypeSelector from "./ContentTypeSelector";
 import QRContentForm from "./QRContentForm";
 import CustomizationPanel from "./CustomizationPanel";
+import TemplateSelector from "./TemplateSelector";
 import QRPreview from "./QRPreview";
 import { qrTypes } from "./qr-types";
 
@@ -11,6 +12,7 @@ const QRGeneratorWidget = () => {
   const [fgColor, setFgColor] = useState("#6366F1");
   const [bgColor, setBgColor] = useState("#FFFFFF");
   const [errorLevel, setErrorLevel] = useState<"L" | "M" | "Q" | "H">("M");
+  const [selectedTemplate, setSelectedTemplate] = useState("modern");
 
   const handleTypeChange = useCallback((type: string) => {
     setSelectedType(type);
@@ -33,12 +35,16 @@ const QRGeneratorWidget = () => {
         />
       </div>
 
-      <div className="grid md:grid-cols-[1fr,320px]">
+      <div className="grid md:grid-cols-[1fr,340px]">
         <div className="p-4 md:p-6 space-y-6 md:border-r">
           <QRContentForm
             selectedType={selectedType}
             formData={formData}
             onFormDataChange={setFormData}
+          />
+          <TemplateSelector
+            selectedStyle={selectedTemplate}
+            onSelectStyle={setSelectedTemplate}
           />
           <CustomizationPanel
             fgColor={fgColor}
@@ -50,12 +56,15 @@ const QRGeneratorWidget = () => {
           />
         </div>
 
-        <div className="p-4 md:p-6 flex flex-col items-center justify-center bg-secondary/20">
+        <div className="p-4 md:p-6 flex flex-col items-center justify-start bg-secondary/20">
           <QRPreview
             value={qrValue}
             fgColor={fgColor}
             bgColor={bgColor}
             errorLevel={errorLevel}
+            selectedType={selectedType}
+            formData={formData}
+            selectedTemplate={selectedTemplate}
           />
         </div>
       </div>

@@ -2,18 +2,33 @@ import { useRef, useCallback } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
+import PhoneMockup from "./PhoneMockup";
+import TemplateRenderer from "./templates/TemplateRenderer";
+import { templateStyles } from "./templates/template-config";
 
 interface QRPreviewProps {
   value: string;
   fgColor: string;
   bgColor: string;
   errorLevel: "L" | "M" | "Q" | "H";
+  selectedType: string;
+  formData: Record<string, string>;
+  selectedTemplate: string;
 }
 
-const QRPreview = ({ value, fgColor, bgColor, errorLevel }: QRPreviewProps) => {
-  const containerRef = useRef<HTMLDivElement>(null);
+const QRPreview = ({
+  value,
+  fgColor,
+  bgColor,
+  errorLevel,
+  selectedType,
+  formData,
+  selectedTemplate,
+}: QRPreviewProps) => {
+  const qrRef = useRef<HTMLDivElement>(null);
+  const style = templateStyles.find((s) => s.id === selectedTemplate) || templateStyles[0];
 
-  const getSvgElement = () => containerRef.current?.querySelector("svg");
+  const getSvgElement = () => qrRef.current?.querySelector("svg");
 
   const downloadSVG = useCallback(() => {
     const svg = getSvgElement();
@@ -34,7 +49,9 @@ const QRPreview = ({ value, fgColor, bgColor, errorLevel }: QRPreviewProps) => {
     if (!svg) return;
     const serializer = new XMLSerializer();
     const svgString = serializer.serializeToString(svg);
-    const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+    const svgBlob = new Blob([svgString], {
+      type: "image/svg+xml;charset=utf-8",
+    });
     const url = URL.createObjectURL(svgBlob);
 
     const img = new window.Image();
@@ -57,16 +74,30 @@ const QRPreview = ({ value, fgColor, bgColor, errorLevel }: QRPreviewProps) => {
 
   return (
     <div className="flex flex-col items-center gap-6 w-full">
-      <div ref={containerRef} className="p-4 bg-background rounded-xl border shadow-sm">
+      {/* Phone Mockup with Template Preview */}
+      <PhoneMockup>
+        <TemplateRenderer
+          typeId={selectedType}
+          data={formData}
+          style={style}
+        />
+      </PhoneMockup>
+
+      {/* QR Code (smaller, below the phone) */}
+      <div
+        ref={qrRef}
+        className="p-3 bg-background rounded-xl border shadow-sm"
+      >
         <QRCodeSVG
           value={value || "https://qryards.com"}
-          size={200}
+          size={120}
           fgColor={fgColor}
           bgColor={bgColor}
           level={errorLevel}
         />
       </div>
 
+      {/* Download Buttons */}
       <div className="flex gap-2 w-full max-w-[200px]">
         <Button
           onClick={downloadPNG}
