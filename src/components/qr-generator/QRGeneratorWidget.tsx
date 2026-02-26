@@ -9,6 +9,8 @@ import TemplateSelector from "./TemplateSelector";
 import QRPreview from "./QRPreview";
 import { qrTypes } from "./qr-types";
 
+import { templateStyles } from "@/config/qrTemplates.config";
+
 const steps = [
   { id: 1, title: "Select Type" },
   { id: 2, title: "Add Content" },
@@ -42,6 +44,14 @@ const QRGeneratorWidget = () => {
     setSelectedType(type);
     setFormData({});
   }, []);
+
+  const handleTemplateSelect = useCallback((templateId: string) => {
+    setSelectedTemplate(templateId);
+    const style = templateStyles.find(s => s.id === templateId);
+    if (style && style.qrConfig) {
+      updateDesignSettings(style.qrConfig);
+    }
+  }, [updateDesignSettings]);
 
   const handleNext = () => setStep((s) => Math.min(s + 1, 3));
   const handleBack = () => setStep((s) => Math.max(s - 1, 1));
@@ -115,7 +125,7 @@ const QRGeneratorWidget = () => {
                 />
                 <TemplateSelector
                   selectedStyle={selectedTemplate}
-                  onSelectStyle={setSelectedTemplate}
+                  onSelectStyle={handleTemplateSelect}
                 />
               </div>
             )}

@@ -24,28 +24,12 @@ const QRGeneratorPage = () => {
                         <div className="w-7 h-7 bg-primary rounded-lg flex items-center justify-center">
                             <QrCode className="w-4 h-4 text-primary-foreground" />
                         </div>
-                        <span className="font-bold text-white tracking-tight">QRYARDS</span>
+                        <span className="font-bold text-white tracking-tight">Create QR in 3 simple steps</span>
                     </Link>
 
                     <div className="w-24" />
                 </div>
             </header>
-
-            {/* ── Page title (compact) ── */}
-            <div className="shrink-0 container mx-auto px-4 pt-5 pb-3 text-center">
-                <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4 }}
-                >
-                    <h1 className="text-2xl font-bold text-white tracking-tight">
-                        Create your QR code
-                    </h1>
-                    <p className="text-white/50 text-sm mt-1">
-                        Pick a type · Add content · Customize · Download
-                    </p>
-                </motion.div>
-            </div>
 
             {/* ── Widget fills the rest ── */}
             <div className="flex-1 min-h-0 container mx-auto px-4 pb-4">

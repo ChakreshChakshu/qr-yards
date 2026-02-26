@@ -5,6 +5,8 @@ import PhoneMockup from "./PhoneMockup";
 import TemplateRenderer from "./templates/TemplateRenderer";
 import { templateStyles } from "@/config/qrTemplates.config";
 import type { QRDesignSettings } from "./CustomizationPanel";
+import QRFrame from "./QRFrame";
+import * as htmlToImage from "html-to-image";
 
 // Dynamically import QRCodeStyling to avoid SSR issues
 let QRCodeStyling: any;
@@ -40,6 +42,7 @@ const QRPreview = ({
   mode = "full",
 }: QRPreviewProps) => {
   const qrRef = useRef<HTMLDivElement>(null);
+  const frameRef = useRef<HTMLDivElement>(null);
   const [qrCode, setQrCode] = useState<any>(null);
   const style = templateStyles.find((s) => s.id === selectedTemplate) || templateStyles[0];
 
@@ -124,8 +127,23 @@ const QRPreview = ({
     }
   }, [qrCode, value, settings, fgColor, bgColor, errorLevel]);
 
-  const download = (extension: "png" | "svg") => {
-    if (qrCode) {
+  const download = async (extension: "png" | "svg") => {
+    if (settings?.frame && settings.frame !== "none" && frameRef.current) {
+      // Use html-to-image for custom frames
+      try {
+        const dataUrl =
+          extension === "svg"
+            ? await htmlToImage.toSvg(frameRef.current)
+            : await htmlToImage.toPng(frameRef.current);
+        const link = document.createElement("a");
+        link.download = `qrcode-framed.${extension}`;
+        link.href = dataUrl;
+        link.click();
+      } catch (err) {
+        console.error("Failed to generate image with frame", err);
+      }
+    } else if (qrCode) {
+      // Fallback to library for standard qr codes
       qrCode.download({
         name: "qrcode",
         extension: extension
@@ -149,11 +167,22 @@ const QRPreview = ({
       {/* QR Code and Download Buttons */}
       {(mode === "full" || mode === "qr") && (
         <>
-          <div
-            className="p-3 bg-background rounded-xl border shadow-sm outline-none"
-          >
-            {/* Container for QR Code Styling */}
-            <div ref={qrRef} className="overflow-hidden" />
+          <div ref={frameRef} className="bg-transparent inline-block">
+            {settings && settings.frame !== "none" ? (
+              <QRFrame settings={settings}>
+                <div
+                  className="p-1 bg-background rounded-xl outline-none"
+                >
+                  <div ref={qrRef} className="overflow-hidden bg-transparent" />
+                </div>
+              </QRFrame>
+            ) : (
+              <div
+                className="p-3 bg-background rounded-xl border shadow-sm outline-none"
+              >
+                <div ref={qrRef} className="overflow-hidden" />
+              </div>
+            )}
           </div>
 
           <div className="flex gap-2 w-full max-w-[200px]">

@@ -140,7 +140,7 @@ const CustomizationPanel = ({ settings, updateSettings }: CustomizationPanelProp
           <TabsContent value="logo" className="space-y-6">
             <div className="space-y-4">
               <Label>Upload Logo</Label>
-              <div className="border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center text-center gap-2 hover:bg-muted/50 transition-colors">
+              <div className="relative border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center text-center gap-2 hover:bg-muted/50 transition-colors">
                 {settings.logo ? (
                   <div className="relative group">
                     <img src={settings.logo} alt="Logo" className="w-16 h-16 object-contain" />
