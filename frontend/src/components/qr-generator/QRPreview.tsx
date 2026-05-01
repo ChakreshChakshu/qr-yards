@@ -7,14 +7,8 @@ import { templateStyles } from "@/config/qrTemplates.config";
 import type { QRDesignSettings } from "./CustomizationPanel";
 import QRFrame from "./QRFrame";
 import * as htmlToImage from "html-to-image";
-
-// Dynamically import QRCodeStyling to avoid SSR issues
-let QRCodeStyling: any;
-if (typeof window !== "undefined") {
-  import("qr-code-styling").then((mod) => {
-    QRCodeStyling = mod.default;
-  });
-}
+import type QRCodeStylingLib from "qr-code-styling";
+import type { CornerDotType, CornerSquareType, DotType } from "qr-code-styling/lib/types";
 
 interface QRPreviewProps {
   value: string;
@@ -43,7 +37,7 @@ const QRPreview = ({
 }: QRPreviewProps) => {
   const qrRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
-  const [qrCode, setQrCode] = useState<any>(null);
+  const [qrCode, setQrCode] = useState<QRCodeStylingLib | null>(null);
   const style = templateStyles.find((s) => s.id === selectedTemplate) || templateStyles[0];
 
   // Initialize QR Code Styling instance
@@ -78,35 +72,35 @@ const QRPreview = ({
     const moduleShape = settings?.moduleShape || "square";
     // Map internal shape names to library types
     // Library types: 'rounded' | 'dots' | 'classy' | 'classy-rounded' | 'square' | 'extra-rounded'
-    const dotsType =
+    const dotsType: DotType =
       moduleShape === "circle" ? "dots" :
         moduleShape === "rounded" ? "rounded" :
           moduleShape === "dots" ? "extra-rounded" : "square";
 
     const eyeShape = settings?.eyeShape || "square";
     // Library cornersSquare types: 'dot' | 'square' | 'extra-rounded'
-    const cornerType =
+    const cornerType: CornerSquareType =
       eyeShape === "circle" ? "dot" :
         eyeShape === "rounded" ? "extra-rounded" :
           eyeShape === "leaf" ? "extra-rounded" : "square"; // leaf fallback
 
     // Library cornersDot types: 'dot' | 'square'
-    const cornerDotType = eyeShape === "square" ? "square" : "dot";
+    const cornerDotType: CornerDotType = eyeShape === "square" ? "square" : "dot";
 
     qrCode.update({
       data: value || "https://qryards.com",
       image: settings?.logo || undefined,
       dotsOptions: {
         color: effectiveFg,
-        type: dotsType as any
+        type: dotsType
       },
       cornersSquareOptions: {
         color: effectiveEyeColor,
-        type: cornerType as any
+        type: cornerType
       },
       cornersDotOptions: {
         color: effectiveEyeColor,
-        type: cornerDotType as any
+        type: cornerDotType
       },
       backgroundOptions: {
         color: effectiveBg,

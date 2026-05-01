@@ -23,8 +23,8 @@ interface CustomizationPanelProps {
 }
 
 const CustomizationPanel = ({ settings, updateSettings }: CustomizationPanelProps) => {
-  const handleChange = (key: keyof QRDesignSettings, value: any) => {
-    updateSettings({ [key]: value });
+  const handleChange = <K extends keyof QRDesignSettings>(key: K, value: QRDesignSettings[K]) => {
+    updateSettings({ [key]: value } as Pick<QRDesignSettings, K>);
   };
 
   return (
