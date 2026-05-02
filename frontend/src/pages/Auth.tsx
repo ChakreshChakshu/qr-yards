@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { getAuthCallbackUrl } from "@/lib/auth";
 
 const EASE_OUT = [0.25, 0.46, 0.45, 0.94] as [number, number, number, number];
 const EASE_IN = [0.55, 0, 1, 0.45] as [number, number, number, number];
@@ -162,7 +163,7 @@ const Auth = () => {
               first_name: form.firstName,
               last_name: form.lastName,
             },
-            emailRedirectTo: `${window.location.origin}/auth?mode=login`,
+            emailRedirectTo: getAuthCallbackUrl(),
           },
         });
 
@@ -195,7 +196,7 @@ const Auth = () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${window.location.origin}/auth?mode=login`,
+        redirectTo: getAuthCallbackUrl(),
       },
     });
 

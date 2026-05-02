@@ -1,9 +1,34 @@
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
-import { ArrowLeft, QrCode } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowLeft, LogOut, QrCode } from "lucide-react";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import QRGeneratorWidget from "@/components/qr-generator/QRGeneratorWidget";
 
 const QRGeneratorPage = () => {
+    const navigate = useNavigate();
+    const { user } = useAuth();
+
+    const handleSignOut = async () => {
+        if (!supabase) {
+            toast.error("Supabase is not configured.");
+            return;
+        }
+
+        const { error } = await supabase.auth.signOut();
+
+        if (error) {
+            toast.error(error.message);
+            return;
+        }
+
+        toast.success("Signed out.");
+        navigate("/auth?mode=login", { replace: true });
+    };
+
     return (
         <div className="h-screen flex flex-col overflow-hidden bg-linear-to-b from-sidebar to-secondary/20">
             {/* Dot grid background */}
@@ -27,7 +52,20 @@ const QRGeneratorPage = () => {
                         <span className="font-bold text-white tracking-tight">Create QR in 3 simple steps</span>
                     </Link>
 
-                    <div className="w-24" />
+                    <div className="flex items-center gap-3">
+                        <span className="hidden max-w-48 truncate text-sm text-white/70 md:block">
+                            {user?.email}
+                        </span>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleSignOut}
+                            className="text-white/80 hover:bg-white/10 hover:text-white"
+                        >
+                            <LogOut className="w-4 h-4" />
+                            Sign out
+                        </Button>
+                    </div>
                 </div>
             </header>
 

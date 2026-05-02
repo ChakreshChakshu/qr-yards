@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { QrCode, Menu, X } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const { user, loading } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 10);
@@ -39,7 +40,9 @@ const Navbar = () => {
       return;
     }
 
+    setIsMobileOpen(false);
     toast.success("Signed out.");
+    navigate("/auth?mode=login", { replace: true });
   };
 
   return (
