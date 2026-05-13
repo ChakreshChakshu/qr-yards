@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const AuthCallback = () => {
   const navigate = useNavigate();
@@ -11,7 +12,9 @@ const AuthCallback = () => {
 
   useEffect(() => {
     const hashParams = new URLSearchParams(window.location.hash.slice(1));
-    const errorDescription = hashParams.get("error_description");
+    const searchParams = new URLSearchParams(window.location.search);
+    const errorDescription = hashParams.get("error_description") ?? searchParams.get("error_description");
+    const code = searchParams.get("code");
 
     if (errorDescription) {
       toast.error(decodeURIComponent(errorDescription));
@@ -20,9 +23,29 @@ const AuthCallback = () => {
       return;
     }
 
-    if (!loading) {
-      navigate(user ? "/qr-generator" : "/auth?mode=login", { replace: true });
+    if (!supabase) {
+      navigate("/auth?mode=login", { replace: true });
+      return;
     }
+
+    const finishOAuth = async () => {
+      if (code && !user) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+
+        if (error) {
+          toast.error(error.message);
+          window.history.replaceState(null, "", "/auth?mode=login");
+          navigate("/auth?mode=login", { replace: true });
+          return;
+        }
+      }
+
+      if (!loading) {
+        navigate(user ? "/qr-generator" : "/auth?mode=login", { replace: true });
+      }
+    };
+
+    void finishOAuth();
   }, [loading, navigate, user]);
 
   return (

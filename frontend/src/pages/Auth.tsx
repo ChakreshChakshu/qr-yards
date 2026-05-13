@@ -96,6 +96,32 @@ const initialState: AuthFormState = {
   password: "",
 };
 
+const leftContent = [
+  {
+    eyebrow: "Campaign launch",
+    title: "Build branded QR experiences fast.",
+    body: "Create links, menus, events, contacts, and promos from one workspace built for quick publishing.",
+  },
+  {
+    eyebrow: "Design control",
+    title: "Shape every scan around your brand.",
+    body: "Tune frames, colors, templates, and content types without slowing down the publishing flow.",
+  },
+];
+
+const rightContent = [
+  {
+    stat: "10+",
+    label: "QR formats ready",
+    body: "Handle websites, Wi-Fi, text, events, contact cards, coupons, and more from one builder.",
+  },
+  {
+    stat: "1 scan",
+    label: "Clear next action",
+    body: "Give customers one clean path to menus, offers, bookings, product pages, or instant contact.",
+  },
+];
+
 const Auth = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -207,60 +233,57 @@ const Auth = () => {
   };
 
   return (
-    <div className="relative h-screen w-full overflow-hidden">
+    <div className="relative min-h-screen w-full overflow-hidden">
       <div className="absolute inset-0 z-0">
         <QRMarqueeBackground />
       </div>
 
-      <div className="absolute inset-0 z-10 bg-sidebar/30 backdrop-blur-sm" />
+      <div className="absolute inset-0 z-10 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.16),_transparent_28%),linear-gradient(120deg,rgba(9,12,20,0.85),rgba(9,12,20,0.68),rgba(9,12,20,0.88))] backdrop-blur-sm" />
 
-      <div className="relative z-20 flex h-full w-full items-center justify-between gap-8 px-6 lg:px-16">
+      <div className="relative z-20 mx-auto grid min-h-screen w-full max-w-[1600px] grid-cols-1 items-center gap-y-10 px-6 py-8 lg:grid-cols-[minmax(260px,1fr)_minmax(420px,520px)_minmax(260px,1fr)] lg:gap-x-16 lg:px-10 xl:gap-x-24 xl:px-16 2xl:gap-x-32">
         <motion.div
           initial={{ opacity: 0, x: -32 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.7, ease: "easeOut", delay: 0.1 }}
-          className="hidden max-w-xs flex-1 flex-col gap-6 lg:flex"
+          className="hidden h-full flex-col justify-between py-10 lg:flex"
         >
-          <div>
-            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-white">QR Generation Platform</p>
-            <h2 className="text-4xl font-extrabold leading-[1.15] tracking-tight text-white">
-              One platform.
-              <br />
-              <span className="text-foreground">Infinite</span>
-              <br />
-              possibilities.
-            </h2>
-            <p className="mt-4 text-sm leading-relaxed text-white">
-              Email/password for steady access. OAuth for fast entry. Same workspace either way.
-            </p>
+          <div className="max-w-sm space-y-5 self-end pr-2 xl:pr-6">
+            <div className="inline-flex w-fit items-center rounded-full border border-white/15 bg-white/8 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-white/70">
+              QR Generation Platform
+            </div>
+            <div>
+              <h2 className="text-4xl font-extrabold leading-[1.05] tracking-tight text-white xl:text-5xl">
+                Turn every
+                <br />
+                scan into
+                <span className="text-accent"> action.</span>
+              </h2>
+              <p className="mt-4 max-w-xs text-sm leading-relaxed text-white/72">
+                QRYARDS helps teams publish beautiful QR touchpoints for campaigns, packaging, events, storefronts, and real-world journeys.
+              </p>
+            </div>
           </div>
 
-          <div className="flex flex-col gap-3">
-            {[
-              { icon: "@", label: "Email/password sign-in" },
-              { icon: "G", label: "Google and GitHub OAuth" },
-              { icon: "S", label: "Supabase session persistence" },
-              { icon: "R", label: "Ready for gated features later" },
-            ].map(({ icon, label }) => (
+          <div className="flex max-w-sm flex-col gap-5 self-end pr-2 xl:pr-6">
+            {leftContent.map((item) => (
               <div
-                key={label}
-                className="flex items-center gap-3 rounded-2xl border border-white/10 bg-sidebar/60 px-4 py-3 shadow-sm backdrop-blur-sm"
+                key={item.title}
+                className="rounded-[28px] border border-white/12 bg-white/8 p-6 shadow-[0_18px_80px_rgba(0,0,0,0.22)] backdrop-blur-xl"
               >
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-sm font-semibold text-white">
-                  {icon}
-                </span>
-                <span className="text-sm font-medium text-white/80">{label}</span>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-white/45">{item.eyebrow}</p>
+                <h3 className="mt-3 text-xl font-semibold text-white">{item.title}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-white/65">{item.body}</p>
               </div>
             ))}
           </div>
         </motion.div>
 
-        <div className="w-full max-w-md shrink-0">
+        <div className="flex w-full items-center justify-center px-0 py-6 lg:px-4 lg:py-0 xl:px-6">
           <motion.div
             key={cardKey}
             animate={{ scale: [1, 0.992, 1] }}
             transition={{ duration: 0.4, ease: "easeInOut", times: [0, 0.5, 1] }}
-            className="h-screen w-full max-w-md overflow-hidden rounded-3xl border border-accent/15 bg-sidebar/60 p-8 shadow-[0_8px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl md:p-10"
+            className="w-full max-w-md overflow-hidden rounded-[32px] border border-white/12 bg-[linear-gradient(180deg,rgba(18,21,34,0.82),rgba(12,14,24,0.92))] p-8 shadow-[0_24px_90px_rgba(0,0,0,0.45)] backdrop-blur-xl md:p-10"
           >
             <Link to="/" className="mb-7 flex w-fit items-center gap-2">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-accent/30 bg-accent/15">
@@ -419,11 +442,41 @@ const Auth = () => {
 
               <p className="flex items-center gap-2 text-xs text-white/35">
                 <Mail className="h-3.5 w-3.5" />
-                Supabase handles password storage, sessions, email confirmation, OAuth redirects.
+                Build once, reuse across flyers, tables, packaging, pop-ups, and every physical touchpoint.
               </p>
             </div>
           </motion.div>
         </div>
+
+        <motion.div
+          initial={{ opacity: 0, x: 32 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.7, ease: "easeOut", delay: 0.15 }}
+          className="hidden h-full flex-col justify-between py-10 lg:flex"
+        >
+          <div className="ml-auto flex max-w-sm flex-col gap-5 self-start pl-2 xl:pl-6">
+            {rightContent.map((item) => (
+              <div
+                key={item.label}
+                className="rounded-[28px] border border-white/12 bg-sidebar/55 p-6 text-right shadow-[0_18px_80px_rgba(0,0,0,0.22)] backdrop-blur-xl"
+              >
+                <p className="text-3xl font-bold tracking-tight text-accent">{item.stat}</p>
+                <h3 className="mt-2 text-lg font-semibold text-white">{item.label}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-white/65">{item.body}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="ml-auto max-w-sm self-start rounded-[32px] border border-white/12 bg-white/8 p-6 pl-2 shadow-[0_18px_80px_rgba(0,0,0,0.22)] backdrop-blur-xl xl:pl-6">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-white/45">Project focus</p>
+            <div className="mt-4 grid grid-cols-2 gap-3 text-sm text-white/75">
+              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">Link and landing page QR</div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">Menus and promo campaigns</div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">Event and Wi-Fi sharing</div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">Contact and coupon flows</div>
+            </div>
+          </div>
+        </motion.div>
       </div>
     </div>
   );
