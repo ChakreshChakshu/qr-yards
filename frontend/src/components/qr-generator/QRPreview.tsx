@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import PhoneMockup from "./PhoneMockup";
@@ -6,18 +6,12 @@ import TemplateRenderer from "./templates/TemplateRenderer";
 import { templateStyles } from "@/config/qrTemplates.config";
 import type { QRDesignSettings } from "./CustomizationPanel";
 import QRFrame from "./QRFrame";
-import * as htmlToImage from "html-to-image";
 import type QRCodeStylingLib from "qr-code-styling";
 import type { CornerDotType, CornerSquareType, DotType } from "qr-code-styling/lib/types";
 
 interface QRPreviewProps {
   value: string;
-  settings?: QRDesignSettings; // Make optional for backward compatibility if needed, but best to enforce
-  // Fallback props (deprecated but maybe passed by parent temporarily)
-  fgColor?: string;
-  bgColor?: string;
-  errorLevel?: "L" | "M" | "Q" | "H";
-
+  settings: QRDesignSettings;
   selectedType: string;
   formData: Record<string, string>;
   selectedTemplate: string;
@@ -27,9 +21,6 @@ interface QRPreviewProps {
 const QRPreview = ({
   value,
   settings,
-  fgColor,
-  bgColor,
-  errorLevel,
   selectedType,
   formData,
   selectedTemplate,
@@ -37,70 +28,60 @@ const QRPreview = ({
 }: QRPreviewProps) => {
   const qrRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
-  const [qrCode, setQrCode] = useState<QRCodeStylingLib | null>(null);
+  const qrInstanceRef = useRef<QRCodeStylingLib | null>(null);
   const style = templateStyles.find((s) => s.id === selectedTemplate) || templateStyles[0];
 
-  // Initialize QR Code Styling instance
   useEffect(() => {
-    if (typeof window !== "undefined" && !qrCode) {
-      import("qr-code-styling").then((mod) => {
-        const QRCodeStylingLib = mod.default;
-        const qr = new QRCodeStylingLib({
-          width: 200,
-          height: 200,
-          imageOptions: {
-            crossOrigin: "anonymous",
-            margin: 2
-          }
-        });
-        setQrCode(qr);
+    if (typeof window === "undefined" || qrInstanceRef.current) return;
+    import("qr-code-styling").then((mod) => {
+      qrInstanceRef.current = new mod.default({
+        width: 200,
+        height: 200,
+        imageOptions: {
+          crossOrigin: "anonymous",
+          margin: 2,
+        },
       });
-    }
-  }, [qrCode]);
+    });
+  }, []);
 
-  // Update QR Code options
   useEffect(() => {
-    if (!qrCode) return;
+    const qr = qrInstanceRef.current;
+    if (!qr) return;
 
-    // Use settings or fallbacks
-    const effectiveFg = settings?.fgColor || fgColor || "#000000";
-    const effectiveBg = settings?.bgColor || bgColor || "#ffffff";
-    const effectiveError = settings?.errorLevel || errorLevel || "M";
-    const effectiveEyeColor = settings?.eyeColor || effectiveFg;
+    const effectiveFg = settings.fgColor || "#000000";
+    const effectiveBg = settings.bgColor || "#ffffff";
+    const effectiveError = settings.errorLevel || "M";
+    const effectiveEyeColor = settings.eyeColor || effectiveFg;
 
-    // Map shapes
-    const moduleShape = settings?.moduleShape || "square";
-    // Map internal shape names to library types
-    // Library types: 'rounded' | 'dots' | 'classy' | 'classy-rounded' | 'square' | 'extra-rounded'
+    const moduleShape = settings.moduleShape || "square";
     const dotsType: DotType =
       moduleShape === "circle" ? "dots" :
         moduleShape === "rounded" ? "rounded" :
           moduleShape === "dots" ? "extra-rounded" : "square";
 
-    const eyeShape = settings?.eyeShape || "square";
-    // Library cornersSquare types: 'dot' | 'square' | 'extra-rounded'
+    const eyeShape = settings.eyeShape || "square";
     const cornerType: CornerSquareType =
       eyeShape === "circle" ? "dot" :
         eyeShape === "rounded" ? "extra-rounded" :
-          eyeShape === "leaf" ? "extra-rounded" : "square"; // leaf fallback
+          eyeShape === "leaf" ? "extra-rounded" : "square";
 
-    // Library cornersDot types: 'dot' | 'square'
     const cornerDotType: CornerDotType = eyeShape === "square" ? "square" : "dot";
 
-    qrCode.update({
+    qr.update({
       data: value || "https://qryards.com",
-      image: settings?.logo || undefined,
+      image: settings.logo || undefined,
       dotsOptions: {
         color: effectiveFg,
-        type: dotsType
+        type: dotsType,
       },
       cornersSquareOptions: {
         color: effectiveEyeColor,
-        type: cornerType
+        type: cornerType,
       },
       cornersDotOptions: {
         color: effectiveEyeColor,
-        type: cornerDotType
+        type: cornerDotType,
       },
       backgroundOptions: {
         color: effectiveBg,
@@ -108,46 +89,212 @@ const QRPreview = ({
       imageOptions: {
         crossOrigin: "anonymous",
         margin: 5,
-        imageSize: (settings?.logoSize || 20) / 100
+        imageSize: (settings.logoSize || 20) / 100,
       },
       qrOptions: {
-        errorCorrectionLevel: effectiveError
-      }
+        errorCorrectionLevel: effectiveError,
+      },
     });
 
-    if (qrRef.current) {
+    if (qrRef.current && !qrRef.current.querySelector("canvas, svg")) {
       qrRef.current.innerHTML = "";
-      qrCode.append(qrRef.current);
+      qr.append(qrRef.current);
     }
-  }, [qrCode, value, settings, fgColor, bgColor, errorLevel]);
+  }, [value, settings]);
 
-  const download = async (extension: "png" | "svg") => {
-    if (settings?.frame && settings.frame !== "none" && frameRef.current) {
-      // Use html-to-image for custom frames
+  const buildQROptions = useCallback((size: number, overrides?: Partial<QRDesignSettings>) => {
+    const s = { ...settings, ...overrides };
+    const effectiveFg = s.fgColor || "#000000";
+    const effectiveBg = s.bgColor || "#ffffff";
+    const effectiveError = s.errorLevel || "M";
+    const effectiveEyeColor = s.eyeColor || effectiveFg;
+    const moduleShape = s.moduleShape || "square";
+    const eyeShape = s.eyeShape || "square";
+
+    const dotsType: DotType =
+      moduleShape === "circle" ? "dots" :
+        moduleShape === "rounded" ? "rounded" :
+          moduleShape === "dots" ? "extra-rounded" : "square";
+
+    const cornerType: CornerSquareType =
+      eyeShape === "circle" ? "dot" :
+        eyeShape === "rounded" ? "extra-rounded" :
+          eyeShape === "leaf" ? "extra-rounded" : "square";
+
+    const cornerDotType: CornerDotType = eyeShape === "square" ? "square" : "dot";
+
+    return {
+      width: size,
+      height: size,
+      data: value || "https://qryards.com",
+      image: s.logo || undefined,
+      dotsOptions: { color: effectiveFg, type: dotsType },
+      cornersSquareOptions: { color: effectiveEyeColor, type: cornerType },
+      cornersDotOptions: { color: effectiveEyeColor, type: cornerDotType },
+      backgroundOptions: { color: effectiveBg },
+      imageOptions: { crossOrigin: "anonymous", margin: 5, imageSize: (s.logoSize || 20) / 100 },
+      qrOptions: { errorCorrectionLevel: effectiveError },
+    };
+  }, [value, settings]);
+
+  const download = async (format: "png" | "jpg" | "webp" | "svg") => {
+    const QRCodeStyling = (await import("qr-code-styling")).default;
+    const baseName = settings.frame !== "none" ? "qrcode-framed" : "qrcode";
+    const qrSize = 1000;
+
+    if (settings.frame !== "none" && format !== "svg") {
       try {
-        const dataUrl =
-          extension === "svg"
-            ? await htmlToImage.toSvg(frameRef.current)
-            : await htmlToImage.toPng(frameRef.current);
+        const qr = new QRCodeStyling({
+          ...buildQROptions(qrSize),
+          type: "canvas",
+        });
+        const tempContainer = document.createElement("div");
+        tempContainer.style.position = "absolute";
+        tempContainer.style.left = "-9999px";
+        tempContainer.style.top = "-9999px";
+        tempContainer.style.visibility = "hidden";
+        document.body.appendChild(tempContainer);
+        qr.append(tempContainer);
+
+        await new Promise<void>((resolve) => setTimeout(resolve, 300));
+
+        const qrCanvas = tempContainer.querySelector("canvas");
+        if (!qrCanvas) {
+          document.body.removeChild(tempContainer);
+          return;
+        }
+
+        const canvas = document.createElement("canvas");
+        const padding = 60;
+        const textHeight = settings.frameText ? 80 : 0;
+        const bubbleTail = settings.frame === "bubble" ? 40 : 0;
+        const borderWidth = settings.frame === "simple" ? 8 : 6;
+        const borderRadius = settings.frame === "simple" ? 20 : 30;
+
+        canvas.width = qrSize + padding * 2 + borderWidth * 2;
+        canvas.height = qrSize + padding * 2 + borderWidth * 2 + textHeight + bubbleTail;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
+        const fg = settings.fgColor || "#000000";
+        const bg = settings.bgColor || "#ffffff";
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = bg;
+
+        const r = borderRadius;
+        const w = canvas.width;
+        const h = canvas.height - bubbleTail;
+        ctx.beginPath();
+        ctx.moveTo(r, 0);
+        ctx.lineTo(w - r, 0);
+        ctx.quadraticCurveTo(w, 0, w, r);
+        ctx.lineTo(w, h - r);
+        ctx.quadraticCurveTo(w, h, w - r, h);
+        if (settings.frame === "bubble") {
+          ctx.lineTo(w, h);
+          ctx.lineTo(w - 50, h);
+          ctx.lineTo(w - 20, h + bubbleTail);
+          ctx.lineTo(w - 50, h);
+          ctx.lineTo(r, h);
+        } else {
+          ctx.lineTo(r, h);
+        }
+        ctx.quadraticCurveTo(0, h, 0, h - r);
+        ctx.lineTo(0, r);
+        ctx.quadraticCurveTo(0, 0, r, 0);
+        ctx.closePath();
+        ctx.fill();
+
+        if (borderWidth > 0) {
+          ctx.strokeStyle = fg;
+          ctx.lineWidth = borderWidth;
+          ctx.stroke();
+        }
+
+        ctx.drawImage(qrCanvas, padding + borderWidth, padding + borderWidth, qrSize, qrSize);
+
+        if (settings.frameText) {
+          const textY = qrSize + padding + borderWidth + textHeight / 2 + borderWidth;
+          if (settings.frame === "badge") {
+            ctx.font = "bold 36px sans-serif";
+            const textWidth = ctx.measureText(settings.frameText).width;
+            ctx.fillStyle = fg + "22";
+            ctx.fillRect(
+              (canvas.width - textWidth - 30) / 2,
+              textY - 22,
+              textWidth + 30,
+              44
+            );
+          }
+          ctx.fillStyle = fg;
+          ctx.font = "bold 36px sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(settings.frameText, canvas.width / 2, textY);
+        }
+
+        const mimeType = format === "jpg" ? "image/jpeg" : format === "webp" ? "image/webp" : "image/png";
+        const dataUrl = canvas.toDataURL(mimeType, 1);
         const link = document.createElement("a");
-        link.download = `qrcode-framed.${extension}`;
+        link.download = `${baseName}.${format}`;
         link.href = dataUrl;
+        document.body.appendChild(link);
         link.click();
+        document.body.removeChild(link);
+        document.body.removeChild(tempContainer);
       } catch (err) {
-        console.error("Failed to generate image with frame", err);
+        console.error("Failed to generate framed image", err);
       }
-    } else if (qrCode) {
-      // Fallback to library for standard qr codes
-      qrCode.download({
-        name: "qrcode",
-        extension: extension
-      });
+      return;
     }
+
+    const qr = new QRCodeStyling({
+      ...buildQROptions(qrSize),
+      type: format === "svg" ? "svg" : "canvas",
+    });
+    const tempContainer = document.createElement("div");
+    tempContainer.style.position = "absolute";
+    tempContainer.style.left = "-9999px";
+    tempContainer.style.visibility = "hidden";
+    document.body.appendChild(tempContainer);
+    qr.append(tempContainer);
+
+    await new Promise<void>((resolve) => setTimeout(resolve, 300));
+
+    if (format === "svg") {
+      const svgEl = tempContainer.querySelector("svg");
+      if (svgEl) {
+        const svgData = new XMLSerializer().serializeToString(svgEl);
+        const blob = new Blob([svgData], { type: "image/svg+xml" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.download = `${baseName}.svg`;
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
+    } else {
+      const canvas = tempContainer.querySelector("canvas");
+      if (canvas) {
+        const mimeType = format === "jpg" ? "image/jpeg" : format === "webp" ? "image/webp" : "image/png";
+        const dataUrl = canvas.toDataURL(mimeType, 1);
+        const link = document.createElement("a");
+        link.download = `${baseName}.${format}`;
+        link.href = dataUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    }
+
+    document.body.removeChild(tempContainer);
   };
 
   return (
     <div className="flex flex-col items-center gap-6 w-full">
-      {/* Phone Mockup with Template Preview */}
       {(mode === "full" || mode === "content") && (
         <PhoneMockup>
           <TemplateRenderer
@@ -158,28 +305,23 @@ const QRPreview = ({
         </PhoneMockup>
       )}
 
-      {/* QR Code and Download Buttons */}
       {(mode === "full" || mode === "qr") && (
         <>
           <div ref={frameRef} className="bg-transparent inline-block">
-            {settings && settings.frame !== "none" ? (
+            {settings.frame !== "none" ? (
               <QRFrame settings={settings}>
-                <div
-                  className="p-1 bg-background rounded-xl outline-none"
-                >
+                <div className="p-1 bg-background rounded-xl outline-none">
                   <div ref={qrRef} className="overflow-hidden bg-transparent" />
                 </div>
               </QRFrame>
             ) : (
-              <div
-                className="p-3 bg-background rounded-xl border shadow-sm outline-none"
-              >
+              <div className="p-3 bg-background rounded-xl border shadow-sm outline-none">
                 <div ref={qrRef} className="overflow-hidden" />
               </div>
             )}
           </div>
 
-          <div className="flex gap-2 w-full max-w-[200px]">
+          <div className="flex gap-2 w-full max-w-[280px]">
             <Button
               onClick={() => download("png")}
               className="flex-1 gradient-primary text-primary-foreground"
@@ -187,6 +329,15 @@ const QRPreview = ({
             >
               <Download className="h-4 w-4 mr-1" />
               PNG
+            </Button>
+            <Button
+              onClick={() => download("jpg")}
+              variant="outline"
+              className="flex-1"
+              size="sm"
+            >
+              <Download className="h-4 w-4 mr-1" />
+              JPG
             </Button>
             <Button
               onClick={() => download("svg")}

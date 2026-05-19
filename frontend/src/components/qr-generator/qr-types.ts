@@ -310,13 +310,12 @@ export const qrTypes: QRTypeConfig[] = [
       { name: 'tiktok', label: 'TikTok', type: 'url', placeholder: 'https://tiktok.com/@yourhandle' }
     ],
     encode: (d) => {
-      const links: string[] = [];
-      if (d.facebook) links.push(`Facebook: ${d.facebook}`);
-      if (d.instagram) links.push(`Instagram: ${d.instagram}`);
-      if (d.twitter) links.push(`X: ${d.twitter}`);
-      if (d.linkedin) links.push(`LinkedIn: ${d.linkedin}`);
-      if (d.tiktok) links.push(`TikTok: ${d.tiktok}`);
-      return links.join('\n') || '';
+      if (d.facebook) return d.facebook;
+      if (d.instagram) return d.instagram;
+      if (d.twitter) return d.twitter;
+      if (d.linkedin) return d.linkedin;
+      if (d.tiktok) return d.tiktok;
+      return '';
     }
   },
   {

@@ -54,7 +54,7 @@ const AuthCallback = () => {
         <LoaderCircle className="h-7 w-7 animate-spin text-primary" />
         <h1 className="text-lg font-semibold text-foreground">Completing sign-in</h1>
         <p className="max-w-sm text-sm text-muted-foreground">
-          Waiting for Supabase to finish the Google OAuth callback.
+          Waiting for Supabase to finish the OAuth callback.
         </p>
       </div>
     </div>

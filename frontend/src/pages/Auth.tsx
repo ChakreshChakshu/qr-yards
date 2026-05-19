@@ -15,6 +15,8 @@ import { getAuthCallbackUrl } from "@/lib/auth";
 const EASE_OUT = [0.25, 0.46, 0.45, 0.94] as [number, number, number, number];
 const EASE_IN = [0.55, 0, 1, 0.45] as [number, number, number, number];
 
+const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
 const formVariants: Variants = {
   enter: (dir: number) => ({
     opacity: 0,
@@ -165,6 +167,16 @@ const Auth = () => {
 
     if (!form.email || !form.password) {
       toast.error("Email and password required.");
+      return;
+    }
+
+    if (!isValidEmail(form.email)) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+
+    if (!isLogin && form.password.length < 6) {
+      toast.error("Password must be at least 6 characters.");
       return;
     }
 
